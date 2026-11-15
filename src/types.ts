@@ -122,6 +122,18 @@ export interface MoveResult {
 
 export interface RoomEventHandlers {
   onConnected?: (data: { roomId: string; message: string }) => void;
+  onRoomSnapshot?: (snapshot: {
+    roomId: string;
+    status: RoomStatus;
+    turn: Side;
+    fen: string;
+    clock: ClockState;
+    redPlayerId: string | null;
+    blackPlayerId: string | null;
+    winnerId: string | null;
+    terminationReason: GameTermination | null;
+    pickedPiece: any;
+  }) => void;
   onPlayerJoined?: (data: { playerId: string; side: Side; roomCode?: string }) => void;
   onGameStarted?: (data: { roomId: string; fen: string; redPlayerId: string; blackPlayerId: string }) => void;
   onPiecePicked?: (data: { playerId: string; side: Side; piece: PieceType; coord: Coord }) => void;

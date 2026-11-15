@@ -97,6 +97,18 @@ export interface RoomEventHandlers {
         roomId: string;
         message: string;
     }) => void;
+    onRoomSnapshot?: (snapshot: {
+        roomId: string;
+        status: RoomStatus;
+        turn: Side;
+        fen: string;
+        clock: ClockState;
+        redPlayerId: string | null;
+        blackPlayerId: string | null;
+        winnerId: string | null;
+        terminationReason: GameTermination | null;
+        pickedPiece: any;
+    }) => void;
     onPlayerJoined?: (data: {
         playerId: string;
         side: Side;

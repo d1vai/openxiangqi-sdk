@@ -256,6 +256,32 @@ export class OpenXiangqiClient {
     });
   }
 
+  public async resign(roomId: string, playerId: string): Promise<{ success: boolean; message: string }> {
+    return this.sendAction(roomId, playerId, 'resign');
+  }
+
+  public async offerDraw(roomId: string, playerId: string): Promise<{ success: boolean; message: string }> {
+    return this.sendAction(roomId, playerId, 'offer_draw');
+  }
+
+  public async acceptDraw(roomId: string, playerId: string): Promise<{ success: boolean; message: string }> {
+    return this.sendAction(roomId, playerId, 'accept_draw');
+  }
+
+  public async rejectDraw(roomId: string, playerId: string): Promise<{ success: boolean; message: string }> {
+    return this.sendAction(roomId, playerId, 'reject_draw');
+  }
+
+  public async claimTimeout(
+    roomId: string,
+    playerId: string
+  ): Promise<{ success: boolean; timedOut: boolean; message: string; winnerId?: string | null }> {
+    return this.request(`/api/v1/game/${roomId}/claim-timeout`, {
+      method: 'POST',
+      body: { playerId }
+    });
+  }
+
   public async sendChat(
     roomId: string,
     playerId: string,
@@ -291,6 +317,12 @@ export class OpenXiangqiClient {
       es.addEventListener('connected', (e: any) => {
         try {
           handlers.onConnected?.(JSON.parse(e.data));
+        } catch (_) {}
+      });
+
+      es.addEventListener('room_snapshot', (e: any) => {
+        try {
+          handlers.onRoomSnapshot?.(JSON.parse(e.data));
         } catch (_) {}
       });
 
@@ -392,6 +424,9 @@ export class OpenXiangqiClient {
               switch (eventType) {
                 case 'connected':
                   handlers.onConnected?.(payload);
+                  break;
+                case 'room_snapshot':
+                  handlers.onRoomSnapshot?.(payload);
                   break;
                 case 'player_joined':
                   handlers.onPlayerJoined?.(payload);

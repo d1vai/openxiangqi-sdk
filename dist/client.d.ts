@@ -76,6 +76,28 @@ export declare class OpenXiangqiClient {
         success: boolean;
         message: string;
     }>;
+    resign(roomId: string, playerId: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
+    offerDraw(roomId: string, playerId: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
+    acceptDraw(roomId: string, playerId: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
+    rejectDraw(roomId: string, playerId: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
+    claimTimeout(roomId: string, playerId: string): Promise<{
+        success: boolean;
+        timedOut: boolean;
+        message: string;
+        winnerId?: string | null;
+    }>;
     sendChat(roomId: string, playerId: string, type: 'quick_phrase' | 'emote' | 'text', content: string): Promise<{
         success: boolean;
         payload?: any;
