@@ -1,4 +1,5 @@
 import {
+  ChessRule,
   Coord,
   Emote,
   GameMode,
@@ -143,11 +144,12 @@ export class OpenXiangqiClient {
   // ==========================================
   public async queueMatch(
     playerId: string,
-    mode: GameMode = 'casual'
+    mode: GameMode = 'casual',
+    options?: { rule?: ChessRule; timeControl?: TimeControl }
   ): Promise<{ status: 'queued' | 'matched'; room?: Room }> {
     return this.request('/api/v1/match/queue', {
       method: 'POST',
-      body: { playerId, mode }
+      body: { playerId, mode, rule: options?.rule, timeControl: options?.timeControl }
     });
   }
 
@@ -169,9 +171,10 @@ export class OpenXiangqiClient {
     playerId: string,
     mode: GameMode = 'casual',
     timeoutMs: number = 20000,
-    pollIntervalMs: number = 800
+    pollIntervalMs: number = 800,
+    options?: { rule?: ChessRule; timeControl?: TimeControl }
   ): Promise<Room> {
-    const initial = await this.queueMatch(playerId, mode);
+    const initial = await this.queueMatch(playerId, mode, options);
     if (initial.status === 'matched' && initial.room) {
       return initial.room;
     }
@@ -191,11 +194,13 @@ export class OpenXiangqiClient {
 
   public async createFriendRoom(
     playerId: string,
-    timeControl?: TimeControl
+    options?: TimeControl | { rule?: ChessRule; timeControl?: TimeControl }
   ): Promise<{ roomCode: string; room: Room }> {
+    const timeControl = options && 'baseTimeMs' in options ? options : (options as any)?.timeControl;
+    const rule = options && 'rule' in options ? (options as any).rule : undefined;
     return this.request('/api/v1/rooms/friend/create', {
       method: 'POST',
-      body: { playerId, timeControl }
+      body: { playerId, timeControl, rule }
     });
   }
 
@@ -356,6 +361,12 @@ export class OpenXiangqiClient {
         } catch (_) {}
       });
 
+      es.addEventListener('piece_revealed', (e: any) => {
+        try {
+          handlers.onPieceRevealed?.(JSON.parse(e.data).payload);
+        } catch (_) {}
+      });
+
       es.addEventListener('chat_message', (e: any) => {
         try {
           handlers.onChatMessage?.(JSON.parse(e.data).payload);
@@ -442,6 +453,9 @@ export class OpenXiangqiClient {
                   break;
                 case 'move_made':
                   handlers.onMoveMade?.(payload);
+                  break;
+                case 'piece_revealed':
+                  handlers.onPieceRevealed?.(payload);
                   break;
                 case 'chat_message':
                   handlers.onChatMessage?.(payload);

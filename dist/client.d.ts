@@ -1,4 +1,4 @@
-import { Coord, Emote, GameMode, MoveResult, Player, QuickPhrase, Room, RoomEventHandlers, TimeControl } from './types.js';
+import { ChessRule, Coord, Emote, GameMode, MoveResult, Player, QuickPhrase, Room, RoomEventHandlers, TimeControl } from './types.js';
 export interface OpenXiangqiClientOptions {
     baseUrl?: string;
     platformApiKey?: string;
@@ -44,7 +44,10 @@ export declare class OpenXiangqiClient {
         avatarUrl?: string;
         suiAddress?: string;
     }): Promise<Player>;
-    queueMatch(playerId: string, mode?: GameMode): Promise<{
+    queueMatch(playerId: string, mode?: GameMode, options?: {
+        rule?: ChessRule;
+        timeControl?: TimeControl;
+    }): Promise<{
         status: 'queued' | 'matched';
         room?: Room;
     }>;
@@ -55,8 +58,14 @@ export declare class OpenXiangqiClient {
         status: 'queued' | 'matched' | 'not_in_queue';
         room?: Room;
     }>;
-    waitForMatch(playerId: string, mode?: GameMode, timeoutMs?: number, pollIntervalMs?: number): Promise<Room>;
-    createFriendRoom(playerId: string, timeControl?: TimeControl): Promise<{
+    waitForMatch(playerId: string, mode?: GameMode, timeoutMs?: number, pollIntervalMs?: number, options?: {
+        rule?: ChessRule;
+        timeControl?: TimeControl;
+    }): Promise<Room>;
+    createFriendRoom(playerId: string, options?: TimeControl | {
+        rule?: ChessRule;
+        timeControl?: TimeControl;
+    }): Promise<{
         roomCode: string;
         room: Room;
     }>;

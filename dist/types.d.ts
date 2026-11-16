@@ -1,9 +1,12 @@
 export type Side = 'red' | 'black';
 export type PieceType = 'k' | 'a' | 'b' | 'n' | 'r' | 'c' | 'p';
 export type Coord = [number, number];
+export type ChessRule = 'standard' | 'jieqi';
 export interface Piece {
     type: PieceType;
     side: Side;
+    isHidden?: boolean;
+    actualType?: PieceType;
 }
 export type MoveNature = 'CHECK' | 'THREATEN' | 'CHASE' | 'EXCHANGE' | 'PROTECT' | 'BLOCK' | 'IDLE';
 export type GameTermination = 'CHECKMATE' | 'STALEMATE' | 'CONTINUOUS_CHECK_FOUL' | 'CONTINUOUS_CHASE_FOUL' | 'CONTINUOUS_THREAT_FOUL' | 'ONE_CHECK_ONE_CHASE' | 'NATURAL_LIMIT_DRAW' | 'CYCLE_DRAW' | 'MUTUAL_DRAW' | 'RESIGNATION' | 'TIMEOUT';
@@ -12,6 +15,7 @@ export type RoomStatus = 'waiting' | 'playing' | 'ended';
 export interface TimeControl {
     baseTimeMs: number;
     incrementMs: number;
+    stepTimeMs?: number;
 }
 export interface ClockState {
     redTimeLeftMs: number;
@@ -51,6 +55,7 @@ export interface Room {
     id: string;
     roomCode?: string;
     mode: GameMode;
+    rule?: ChessRule;
     status: RoomStatus;
     timeControl: TimeControl;
     clock: ClockState;
@@ -100,8 +105,10 @@ export interface RoomEventHandlers {
     onRoomSnapshot?: (snapshot: {
         roomId: string;
         status: RoomStatus;
+        rule?: ChessRule;
         turn: Side;
         fen: string;
+        timeControl?: TimeControl;
         clock: ClockState;
         redPlayerId: string | null;
         blackPlayerId: string | null;
@@ -113,12 +120,14 @@ export interface RoomEventHandlers {
         playerId: string;
         side: Side;
         roomCode?: string;
+        rule?: ChessRule;
     }) => void;
     onGameStarted?: (data: {
         roomId: string;
         fen: string;
         redPlayerId: string;
         blackPlayerId: string;
+        rule?: ChessRule;
     }) => void;
     onPiecePicked?: (data: {
         playerId: string;
@@ -140,7 +149,20 @@ export interface RoomEventHandlers {
         nature: MoveNature;
         turn: Side;
         clock: ClockState;
+        revealed?: {
+            from: Coord;
+            to: Coord;
+            type: PieceType;
+        };
         signature?: string;
+    }) => void;
+    onPieceRevealed?: (data: {
+        roomId: string;
+        revealed: {
+            from: Coord;
+            to: Coord;
+            type: PieceType;
+        };
     }) => void;
     onChatMessage?: (data: {
         fromPlayerId: string;

@@ -85,10 +85,10 @@ export class OpenXiangqiClient {
     // ==========================================
     // 3. Matchmaking & Room APIs
     // ==========================================
-    async queueMatch(playerId, mode = 'casual') {
+    async queueMatch(playerId, mode = 'casual', options) {
         return this.request('/api/v1/match/queue', {
             method: 'POST',
-            body: { playerId, mode }
+            body: { playerId, mode, rule: options?.rule, timeControl: options?.timeControl }
         });
     }
     async cancelQueue(playerId) {
@@ -101,8 +101,8 @@ export class OpenXiangqiClient {
         return this.request(`/api/v1/match/status/${playerId}`);
     }
     // Convenient helper: poll queue until matched or timeout
-    async waitForMatch(playerId, mode = 'casual', timeoutMs = 20000, pollIntervalMs = 800) {
-        const initial = await this.queueMatch(playerId, mode);
+    async waitForMatch(playerId, mode = 'casual', timeoutMs = 20000, pollIntervalMs = 800, options) {
+        const initial = await this.queueMatch(playerId, mode, options);
         if (initial.status === 'matched' && initial.room) {
             return initial.room;
         }
@@ -117,10 +117,12 @@ export class OpenXiangqiClient {
         await this.cancelQueue(playerId).catch(() => { });
         throw new Error('Matchmaking timed out');
     }
-    async createFriendRoom(playerId, timeControl) {
+    async createFriendRoom(playerId, options) {
+        const timeControl = options && 'baseTimeMs' in options ? options : options?.timeControl;
+        const rule = options && 'rule' in options ? options.rule : undefined;
         return this.request('/api/v1/rooms/friend/create', {
             method: 'POST',
-            body: { playerId, timeControl }
+            body: { playerId, timeControl, rule }
         });
     }
     async joinFriendRoom(playerId, roomCode) {
@@ -242,6 +244,12 @@ export class OpenXiangqiClient {
                 }
                 catch (_) { }
             });
+            es.addEventListener('piece_revealed', (e) => {
+                try {
+                    handlers.onPieceRevealed?.(JSON.parse(e.data).payload);
+                }
+                catch (_) { }
+            });
             es.addEventListener('chat_message', (e) => {
                 try {
                     handlers.onChatMessage?.(JSON.parse(e.data).payload);
@@ -324,6 +332,9 @@ export class OpenXiangqiClient {
                                     break;
                                 case 'move_made':
                                     handlers.onMoveMade?.(payload);
+                                    break;
+                                case 'piece_revealed':
+                                    handlers.onPieceRevealed?.(payload);
                                     break;
                                 case 'chat_message':
                                     handlers.onChatMessage?.(payload);
